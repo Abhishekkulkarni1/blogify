@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { useForm } from "react-hook-form";
-import { Btn, Input, Select } from "./Index";
+import { Btn, Input, RTTE, Select } from "../Index";
 import appwriteService from "../../appwrite/appwriteconfig";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -10,18 +10,19 @@ function PostForm({ post }) {
     useForm({
       defaultValues: {
         title: post?.title || "",
-        content: content?.content || "",
-        slug: post?.slug || "",
-        statusbar: post?.statusbar || "active",
+        slug: post?.$id || "",
+        content: post?.content || "",
+        // statusbar: post?.statusbar || "active",
         status: post?.status || "active",
       },
     });
   const navigate = useNavigate();
-  const userData = useSelector((state) => state.user.userData);
+  const userData = useSelector((state) => state.auth.userData);
+  
   const submit = async (data) => {
     if (post) {
       const file = data.image[0]
-        ? appwriteService.uploadFile(data.image[0])
+        ? await appwriteService.uploadFile(data.image[0])
         : null;
       if (file) {
         appwriteService.deleteFile(post.featuredImage);
@@ -32,7 +33,8 @@ function PostForm({ post }) {
       });
       if (dbPost) {
         navigate(`/post/${dbPost.$id}`);
-      } else {
+      } 
+    } else {
         const file = await appwriteService.uploadFile(data.image[0]);
         if (file) {
           const fileId = file.$id;
@@ -46,8 +48,7 @@ function PostForm({ post }) {
           }
         }
       }
-    }
-  };
+    };
 
   const slugTransform = useCallback((value) => {
     if (value && typeof value === "string")
@@ -63,12 +64,10 @@ function PostForm({ post }) {
   React.useEffect(() => {
     const subscription = watch((value, { name }) => {
       if (name === "title") {
-        setValue("slug", slugTransform(value.title, { shouldValidate: true }));
+        setValue("slug", slugTransform(value.title), { shouldValidate: true });
       }
     });
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, [watch, slugTransform, setValue]);
 
   return (
@@ -77,13 +76,13 @@ function PostForm({ post }) {
         <Input
           label="Title :"
           placeholder="Title"
-          className="mb-4"
+          className="mb-4 my-4"
           {...register("title", { required: true })}
         />
         <Input
           label="Slug :"
           placeholder="Slug"
-          className="mb-4"
+          className="mb-4 my-1"
           {...register("slug", { required: true })}
           onInput={(e) => {
             setValue("slug", slugTransform(e.currentTarget.value), {
@@ -92,17 +91,17 @@ function PostForm({ post }) {
           }}
         />
         <RTTE
-          label="Content :"
+          label="Write your content :"
           name="content"
           control={control}
           defaultValue={getValues("content")}
         />
       </div>
-      <div className="w-1/3 px-2">
+      <div className="w-1/3 px-2 my-2">
         <Input
           label="Featured Image :"
           type="file"
-          className="mb-4"
+          className="mb-4 my-2"
           accept="image/png, image/jpg, image/jpeg, image/gif"
           {...register("image", { required: !post })}
         />
@@ -124,7 +123,7 @@ function PostForm({ post }) {
         <Btn
           type="submit"
           bgColor={post ? "bg-green-500" : undefined}
-          className="w-full"
+          className="w-full py-2 my-2"
         >
           {post ? "Update" : "Submit"}
         </Btn>

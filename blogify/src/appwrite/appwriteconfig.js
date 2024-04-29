@@ -16,24 +16,27 @@ export class Service{
         this.storage = new Storage(this.client);
     };
 
-    async createPost({title, slug, content, featuredImage, status, userId}){
+    async createPost({ title, slug, content, featuredImage, status, userId }) {
         try {
+            const documentId = ID.unique();
             return await this.databases.createDocument(
                 config.appwriteDbId,
                 config.appwriteCollectionId,
-                slug,
-                {
+                documentId,
+                JSON.stringify({
+                    slug,
                     title,
-                    content, 
+                    content,
                     featuredImage,
-                    status, 
+                    status,
                     userId
-                }
+                })
             )
         } catch (error) {
             console.log("Appwrite Service : appwriteconfig : createPost : error", error);
         }
     }
+    
     
     async updatePost(slug, {title, content, featuredImage, status}){
         try {
@@ -53,14 +56,19 @@ export class Service{
         }
     }
     
-    async deletePost({slug}){
+    async deletePost(slug){
         try {
+            const post = await this.getPost(slug)
+            if (post) {
             await this.databases.deleteDocument(
                 config.appwriteDbId,
                 config.appwriteCollectionId,
-                slug
-            )
+                post.$id 
+            );
             return true;
+        } else {
+            throw new Error("Post not found");
+        }
         } catch (error) {
             console.log("Appwrite Service : appwriteconfig : deletePost : error", error);
             return false; 
@@ -79,13 +87,13 @@ export class Service{
             return false;
         }
     }
-
+    
     async getAllPosts(queries = [Query.equal("status", "active")]){
         try {
             return await this.databases.listDocuments(
                 config.appwriteDbId,
                 config.appwriteCollectionId,
-                queries,
+                ...queries
             )
         } catch (error) {
             console.log("Appwrite Service : appwriteconfig : getAllPosts : error", error);
@@ -95,7 +103,7 @@ export class Service{
     
     async uploadFile(file){
         try {
-            return await this.bucket.createFile(
+            return await this.storage.createFile(
                 config.appwriteBucketId,
                 ID.unique(),
                 file
@@ -108,7 +116,7 @@ export class Service{
 
     async deleteFile(fileId){
         try {
-            await this.bucket.deleteFile(
+            await this.storage.deleteFile(
                 config.appwriteBucketId,
                 fileId
             )
@@ -120,7 +128,7 @@ export class Service{
     }
 
     getFilePreview(fileId){
-        return this.bucket.getFilePreview(
+        return this.storage.getFilePreview(
             config.appwriteBucketId,
             fileId
         )

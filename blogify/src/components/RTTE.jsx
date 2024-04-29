@@ -1,9 +1,10 @@
-import React from 'react'
+import React, {useState} from 'react'
 import {Editor} from "@tinymce/tinymce-react"
 import {Controller} from "react-hook-form"
-
+import config from '../config/config';
 
 export default function RTTE({name, control, label, defaultValue = ""}) {
+  
   return (
     <div className='w-full'>
         {label && <label className='inline-block mb-1 pl-1'> 
@@ -13,12 +14,12 @@ export default function RTTE({name, control, label, defaultValue = ""}) {
             name = {name || "Name"}
             control = {control}
             render = {({field: {onChange}}) => (
-              <Editor 
+              <Editor apiKey= 'cb67jpdmwl6s3kotf52smpdej65pkhtxi2u6drq75579jm2l' 
                 initialValue= {defaultValue}
                 init = {
                   {
                     initialValue: defaultValue,
-                    branding: false,
+                    // branding: false,
                     height: 600,
                     menubar: true,
                     plugins: [
@@ -32,17 +33,14 @@ export default function RTTE({name, control, label, defaultValue = ""}) {
                                bold italic forecolor | alignleft aligncenter \
                                alignright alignjustify | bullist numlist outdent \
                                indent |removeformat | help",
-                               content_style: "body {font-family: Helvetica, Arial, sans-serif; font-size: 14px} "
+                    content_style: "body {font-family: Helvetica, Arial, sans-serif; font-size: 14px} ",
                   }
                 }  
                 onEditorChange={onChange}
                 />
             )}
-        
         />
-
     </div>
-    
   )
 }
 
